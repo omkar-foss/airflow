@@ -244,7 +244,7 @@ class SerializedDAG:
     def get_task(self, task_id: str) -> SerializedOperator:
         if task_id in self.task_dict:
             return self.task_dict[task_id]
-        raise TaskNotFound(f"Task {task_id} not found")
+        raise TaskNotFound(f"Task {task_id} not found", error_code="AERR008")
 
     def __getitem__(self, node_id: str) -> SerializedOperator | SerializedTaskGroup:
         """Return a task or task group by its fully-qualified ID."""

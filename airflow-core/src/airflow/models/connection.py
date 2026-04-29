@@ -527,7 +527,9 @@ class Connection(Base, LoggingMixin):
                 return conn
             except AirflowRuntimeError as e:
                 if e.error.error == ErrorType.CONNECTION_NOT_FOUND:
-                    raise AirflowNotFoundException(f"The conn_id `{conn_id}` isn't defined") from None
+                    raise AirflowNotFoundException(
+                        f"The conn_id `{conn_id}` isn't defined", error_code="AERR002"
+                    ) from None
                 raise
 
         from airflow.configuration import conf, ensure_secrets_loaded
@@ -561,7 +563,7 @@ class Connection(Base, LoggingMixin):
                     type(secrets_backend).__name__,
                 )
 
-        raise AirflowNotFoundException(f"The conn_id `{conn_id}` isn't defined")
+        raise AirflowNotFoundException(f"The conn_id `{conn_id}` isn't defined", error_code="AERR003")
 
     def to_dict(self, *, prune_empty: bool = False, validate: bool = True) -> dict[str, Any]:
         """

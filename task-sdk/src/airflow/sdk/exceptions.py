@@ -33,6 +33,26 @@ if TYPE_CHECKING:
     from airflow.sdk.execution_time.comms import ErrorResponse
 
 
+class AirflowErrorCodeMixin:
+    """Mixin class providing ability to pass error_code to an exception."""
+
+    def __init__(self, *args, error_code=None, **kwargs):
+        self.error_code = error_code
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        base = super().__str__()
+        if self.error_code is None:
+            return base
+        error_code_str = f"[airflow error code={self.error_code}]"
+        return f"{base} {error_code_str}" if base else error_code_str
+
+    def __repr__(self):
+        if self.error_code is None:
+            return super().__repr__()
+        return f"{self.__class__.__name__}(airflow error code={self.error_code}, args={self.args})"
+
+
 class AirflowException(Exception):
     """
     Base class for all Airflow's errors.
@@ -51,7 +71,7 @@ class AirflowOptionalProviderFeatureException(AirflowException):
     """Raise by providers when imports are missing for optional provider features."""
 
 
-class AirflowNotFoundException(AirflowException):
+class AirflowNotFoundException(AirflowErrorCodeMixin, AirflowException):
     """Raise when the requested object/resource is not available in the system."""
 
     status_code = HTTPStatus.NOT_FOUND
@@ -69,7 +89,7 @@ class AirflowRuntimeError(Exception):
         super().__init__(f"{error.error.value}: {error.detail}")
 
 
-class AirflowTimetableInvalid(AirflowException):
+class AirflowTimetableInvalid(AirflowErrorCodeMixin, AirflowException):
     """Raise when a DAG has an invalid timetable."""
 
 
@@ -326,7 +346,7 @@ class TaskAlreadyInTaskGroup(AirflowException):
         return f"cannot add {self.task_id!r} to {self.new_group_id!r} (already in {existing_group})"
 
 
-class TaskNotFound(AirflowException):
+class TaskNotFound(AirflowErrorCodeMixin, AirflowException):
     """Raise when a Task is not available in the system."""
 
 

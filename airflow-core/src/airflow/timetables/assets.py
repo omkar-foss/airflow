@@ -59,9 +59,9 @@ class AssetOrTimeSchedule(AssetTriggeredTimetable):
 
     def validate(self) -> None:
         if isinstance(self.timetable, AssetTriggeredTimetable):
-            raise AirflowTimetableInvalid("cannot nest asset timetables")
+            raise AirflowTimetableInvalid("cannot nest asset timetables", error_code="AERR006")
         if not isinstance(self.asset_condition, SerializedAssetBase):
-            raise AirflowTimetableInvalid("all elements in 'assets' must be assets")
+            raise AirflowTimetableInvalid("all elements in 'assets' must be assets", error_code="AERR007")
 
     def serialize(self) -> dict[str, typing.Any]:
         from airflow.serialization.encoders import encode_asset_like, encode_timetable

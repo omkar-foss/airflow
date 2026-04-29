@@ -141,7 +141,7 @@ class CronMixin:
         try:
             croniter(self._expression)
         except (CroniterBadCronError, CroniterBadDateError) as e:
-            raise AirflowTimetableInvalid(str(e))
+            raise AirflowTimetableInvalid(str(e), error_code="AERR004")
 
     def _get_next(self, current: DateTime) -> DateTime:
         """Get the first schedule after specified time, with DST fixed."""

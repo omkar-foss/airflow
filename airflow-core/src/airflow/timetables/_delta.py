@@ -56,7 +56,9 @@ class DeltaMixin:
     def validate(self) -> None:
         now = datetime.datetime.now()
         if (now + self._delta) <= now:
-            raise AirflowTimetableInvalid(f"schedule interval must be positive, not {self._delta!r}")
+            raise AirflowTimetableInvalid(
+                f"schedule interval must be positive, not {self._delta!r}", error_code="AERR005"
+            )
 
     def _get_next(self, current: DateTime) -> DateTime:
         return convert_to_utc(current + self._delta)

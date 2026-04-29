@@ -1,0 +1,160 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+---
+
+error_guide:
+  description: Quick debug guide for common errors while using Airflow.
+  error_codes:
+    # AERR001: Generic error, should only be raised as a catch-all error, if all else fails.
+    - error_code: AERR001
+      exception_type: AirflowException
+      user_facing_error_message: Internal error occurred
+      description: It looks the application or server cannot handle the request.
+      first_steps: Try restarting Airflow, and retry your action a few times. If the
+        error still persists, ask a question with all relevant details here -
+        https://github.com/apache/airflow/discussions.
+      documentation: https://airflow.apache.org/community/
+
+    # Specify error codes below for exception classes as required.
+    # Exception class can have multiple error codes representing its respective error states.
+    # e.g. AirflowNotFoundException can have AERR002, AERR003, etc representing different not found cases.
+
+    - error_code: AERR002
+      exception_type: AirflowNotFoundException
+      user_facing_error_message: TaskSDK connection not found for requested connection ID
+      description: This error occurs when Airflow is unable to locate a connection
+        with given connection id in any configured secrets backend or metadata
+        store. It attempted to retrieve the connection via the Task SDK, but no
+        matching entry was found.
+      first_steps: Verify that the connection ID is correctly configured in Airflow.
+        Check your secrets backend, environment variables, or Airflow UI to
+        ensure the connection exists and is accessible to the current task.
+        Confirm there are no typos in the conn_id. If using a secrets backend,
+        ensure it is properly configured and reachable.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/howto/connection.html#using-connections
+
+    - error_code: AERR003
+      exception_type: AirflowNotFoundException
+      user_facing_error_message: Requested connection ID is not defined
+      description: This error occurs when Airflow attempts to resolve a connection
+        using its standard secrets resolution flow (SecretCache and configured
+        secrets backends) and is unable to find any matching connection for
+        given conn_id. It also indicates that all configured backends were
+        checked sequentially but none returned a valid connection.
+      first_steps: >
+        Confirm that the connection is defined in at least one configured
+        secrets backend or  in the Airflow metadata database. Check whether
+        SecretCache is enabled and populated  correctly. Verify backend
+        configuration in airflow.cfg and ensure all external secrets  providers
+        (e.g., AWS Secrets Manager, HashiCorp Vault) are reachable and properly
+        authenticated.  Also confirm there are no typos in the conn_id and that
+        team_name (if used) matches the stored entry.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/secrets-backend/index.html
+
+    - error_code: AERR004
+      exception_type: AirflowTimetableInvalid
+      user_facing_error_message: Provided cron expression is invalid
+      description: This error is raised when Airflow attempts to validate a cron
+        expression using croniter and the expression is malformed or represents
+        an invalid schedule. It could either be due to invalid cron syntax or
+        invalid date/time values.
+      first_steps: >
+        Verify that the cron expression follows standard cron syntax (minute,
+        hour,  day of month, month, day of week). Check for invalid characters,
+        incorrect field counts,  or out-of-range values (e.g., minute > 59,
+        month > 12). Test the expression using a cron  validator or croniter
+        directly in a Python shell. If using presets or dynamic inputs,
+        ensure  they resolve to valid cron strings.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/cron.html
+
+    - error_code: AERR005
+      exception_type: AirflowTimetableInvalid
+      user_facing_error_message: Cron schedule interval must be a positive duration
+      description: >
+        This error occurs when Airflow validates a timetable based on a time
+        duration and finds that the resulting scheduled time is not in the
+        future. Specifically, if adding the provided interval to the current
+        time does not advance time (i.e., its either now or before now), the
+        interval is  considered zero or negative. This violates Airflow's
+        requirement that scheduling intervals  must move forward in time.
+      first_steps: >
+        Check the value of the provided cron schedule interval and ensure it
+        represents a strictly positive duration. Verify that none of its
+        components (days, seconds, etc.) result in a zero or negative total. If
+        the interval is dynamically computed, inspect the logic to confirm it
+        cannot produce negative or zero values.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/timetable.html
+
+    - error_code: AERR006
+      exception_type: AirflowTimetableInvalid
+      user_facing_error_message: Asset-based timetables cannot be nested
+      description: This error occurs when Airflow validates a timetable configuration
+        and detects that an AssetTriggeredTimetable is being used inside another
+        timetable. Nested asset-driven scheduling is not supported because
+        asset-triggered timetables are designed to operate as top-level
+        scheduling constructs. Attempting to embed one within another leads to
+        ambiguous or conflicting scheduling behavior, so Airflow raises an
+        AirflowTimetableInvalid exception.
+      first_steps: >
+        Review the timetable configuration and ensure that an
+        AssetTriggeredTimetable is not being passed as a nested or inner
+        timetable. If you need multiple scheduling conditions, consider
+        restructuring the DAG to use a single asset-based timetable or separate
+        DAGs. Confirm that the timetable parameter is a supported non-asset
+        timetable type when combined with asset conditions.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/assets.html
+
+    - error_code: AERR007
+      exception_type: AirflowTimetableInvalid
+      user_facing_error_message: All elements in 'assets' must be valid asset objects
+      description: This error is raised when Airflow validates the asset condition
+        configuration and finds that one or more elements are serialized.
+        Asset-based scheduling requires all provided assets to be properly
+        serialized asset objects so they can be tracked and evaluated by the
+        scheduler. Passing unsupported types (e.g., strings, dictionaries, or
+        uninitialized objects) causes this validation to fail.
+      first_steps: >
+        Inspect the asset contents or asset_condition input and ensure each
+        element is serializable i.e. an  instance of SerializedAssetBase. If
+        assets are being dynamically constructed, verify they are properly
+        serialized before being passed. Avoid using raw identifiers or
+        unsupported data types, and instead use the appropriate Airflow asset
+        classes or serialization utilities.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/serializers.html
+
+    - error_code: AERR008
+      exception_type: TaskNotFound
+      user_facing_error_message: Requested task ID was not found in the DAG
+      description: This error occurs when Airflow attempts to retrieve a task from the
+        DAG using a given task_id, but no matching entry exists in the internal
+        task_dict. It indicates that the specified task ID is either incorrect,
+        missing, or not registered as part of the DAG definition.
+      first_steps: >
+        Verify that the task_id is spelled correctly and matches exactly with
+        the task defined in the DAG (including case sensitivity). Check that the
+        task is properly instantiated and added to the DAG context. If the
+        task_id is dynamically generated, confirm the logic produces the
+        expected value. Also ensure that the DAG has been fully parsed and all
+        tasks are registered before attempting retrieval.
+      documentation: >
+        https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/tasks.html

@@ -43,16 +43,35 @@ try:
 except ModuleNotFoundError:
     # When _AIRFLOW__AS_LIBRARY is set, airflow.sdk may not be installed.
     # In that case, we define fallback exception classes that mirror the SDK ones.
+    class AirflowErrorCodeMixin:
+        """Mixin class providing ability to pass error_code to an exception."""
+
+        def __init__(self, *args, error_code=None, **kwargs):
+            self.error_code = error_code
+            super().__init__(*args, **kwargs)
+
+        def __str__(self):
+            base = super().__str__()
+            if self.error_code is None:
+                return base
+            error_code_str = f"[airflow error code={self.error_code}]"
+            return f"{base} {error_code_str}" if base else error_code_str
+
+        def __repr__(self):
+            if self.error_code is None:
+                return super().__repr__()
+            return f"{self.__class__.__name__}(airflow error code={self.error_code}, args={self.args})"
+
     class AirflowException(Exception):  # type: ignore[no-redef]
         """Base exception for Airflow errors."""
 
-    class AirflowNotFoundException(AirflowException):  # type: ignore[no-redef]
+    class AirflowNotFoundException(AirflowErrorCodeMixin, AirflowException):  # type: ignore[no-redef]
         """Raise when a requested object is not found."""
 
-    class AirflowTimetableInvalid(AirflowException):  # type: ignore[no-redef]
+    class AirflowTimetableInvalid(AirflowErrorCodeMixin, AirflowException):  # type: ignore[no-redef]
         """Raise when a DAG has an invalid timetable."""
 
-    class TaskNotFound(AirflowException):  # type: ignore[no-redef]
+    class TaskNotFound(AirflowErrorCodeMixin, AirflowException):  # type: ignore[no-redef]
         """Raise when a Task is not available in the system."""
 
     class NodeNotFound(TaskNotFound, KeyError):  # type: ignore[no-redef]

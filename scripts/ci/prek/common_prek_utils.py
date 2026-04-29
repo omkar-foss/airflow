@@ -79,6 +79,50 @@ def temporary_tsc_project(
     yield temp_tsconfig_path
 
 
+def is_valid_python(contents: str) -> bool:
+    """
+    Checks if contents is valid python code or not.
+    args:
+        contents (str): Code contents.
+    returns: True if valid python code, False otherwise.
+    """
+    try:
+        compile(contents, "<string>", "exec")
+        return True
+    except SyntaxError:
+        return False
+
+
+@contextmanager
+def temporary_python_file(dir_path: Path, contents: str) -> Generator[_TemporaryFileWrapper, None, None]:
+    """
+    Create a temporary Python file with the specified contents.
+    args:
+        dir_path (Path): Directory for the temporary python file.
+        contents (str): Code contents of temporary file.
+    yields: NamedTemporaryFile: temporary file object.
+    raises: RuntimeError if parent dir doesn't exist or if writing to temp file fails.
+    """
+
+    if not is_valid_python(contents):
+        raise RuntimeError("Invalid python code contents")
+
+    if not dir_path.exists():
+        raise RuntimeError(f"Directory does not exist: {dir_path}")
+
+    temp_file = NamedTemporaryFile(mode="w", prefix="testing_temp_", suffix=".py", dir=dir_path, delete=True)
+
+    print_msg = f"Creating temporary python file at {temp_file.name} with contents as follows:\n{contents}"
+    if console:
+        console.print(print_msg)
+    else:
+        print(print_msg)
+
+    temp_file.write(contents)
+    temp_file.flush()
+    yield temp_file
+
+
 def run_command(*args, **kwargs) -> None:
     """
     Run command with given arguments and return the result.

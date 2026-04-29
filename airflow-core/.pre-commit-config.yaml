@@ -24,6 +24,20 @@ default_language_version:
 repos:
   - repo: local
     hooks:
+      - id: check-error-code-in-exceptions
+        name: Check error_code usage in exceptions
+        entry: ../scripts/ci/prek/check_airflow_error_codes.py
+        language: python
+        files: >
+          (?x)
+          ^src/airflow/.*\.py$|
+          ^providers/.*\.py$|
+          ^task-sdk/.*\.py$
+        types: [python]
+        additional_dependencies: ['pyyaml>=6.0']
+        require_serial: true
+  - repo: local
+    hooks:
       - id: check-taskinstance-tis-attrs
         name: Check that TI and TIS have the same attributes
         entry: ../scripts/ci/prek/check_ti_vs_tis_attributes.py
