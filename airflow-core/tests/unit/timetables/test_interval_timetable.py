@@ -149,28 +149,28 @@ def test_validate_success(timetable: Timetable) -> None:
     [
         pytest.param(
             CronDataIntervalTimetable("0 0 1 13 0", utc),
-            "[0 0 1 13 0] is not acceptable, out of range",
+            "[0 0 1 13 0] is not acceptable, out of range [airflow error code=AERR004]",
             id="invalid-cron",
         ),
         pytest.param(
             DeltaDataIntervalTimetable(datetime.timedelta()),
-            "schedule interval must be positive, not datetime.timedelta(0)",
+            "schedule interval must be positive, not datetime.timedelta(0) [airflow error code=AERR005]",
             id="zero-timedelta",
         ),
         pytest.param(
             DeltaDataIntervalTimetable(dateutil.relativedelta.relativedelta()),
-            "schedule interval must be positive, not relativedelta()",
+            "schedule interval must be positive, not relativedelta() [airflow error code=AERR005]",
             id="zero-relativedelta",
         ),
         pytest.param(
             DeltaDataIntervalTimetable(datetime.timedelta(days=-1)),
             # Dynamically formatted since different Python versions display timedelta differently.
-            f"schedule interval must be positive, not {datetime.timedelta(days=-1)!r}",
+            f"schedule interval must be positive, not {datetime.timedelta(days=-1)!r} [airflow error code=AERR005]",
             id="negative-timedelta",
         ),
         pytest.param(
             DeltaDataIntervalTimetable(dateutil.relativedelta.relativedelta(days=-1)),
-            "schedule interval must be positive, not relativedelta(days=-1)",
+            "schedule interval must be positive, not relativedelta(days=-1) [airflow error code=AERR005]",
             id="negative-relativedelta",
         ),
     ],
